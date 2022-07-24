@@ -10,6 +10,8 @@ const ALCHEMY_API_KEY = "KEY";
 // Beware: NEVER put real Ether into testing accounts
 const GOERLI_PRIVATE_KEY = "YOUR GOERLI PRIVATE KEY";
 
+require("./tasks/faucet");
+
 module.exports = {
   solidity: {
     version: "0.8.9",

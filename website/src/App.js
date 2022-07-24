@@ -1,13 +1,19 @@
 import React, { useState, useEffect } from "react";
+import { ethers } from "ethers";
+import TokenArtifact from "./abis/Token.json";
+import contractAddress from "./abis/contract-address.json";
 
+import ConnectWallet from "./pages/ConnectWallet";
 import Transfer from "./pages/Transfer";
 import NoWalletDetected from "./pages/NoWalletDetected";
-import { Spin, Typography } from "@arco-design/web-react";
+import { Typography, Notification } from "@arco-design/web-react";
 import "@arco-design/web-react/dist/css/arco.css";
 import './App.css';
-import useWeb3 from "./contexts/web3-context";
 
 const INITIAL_STATE = {
+  provider: undefined,
+  account: undefined,
+  tokenContract: undefined,
   // The info of the token (i.e. It's Name and symbol)
   tokenData: undefined,
   // The user's address and balance
@@ -38,18 +44,62 @@ const ERROR_CODE_TX_REJECTED_BY_USER = 4001;
 // you how to keep your Dapp and contract's state in sync,  and how to send a
 // transaction.
 const App = () => {
-  const { provider, account, tokenContract } = useWeb3();
   const [appState, setAppState] = useState(INITIAL_STATE);
 
-  const getTokenData = async (tokenContract) => {
+  const initialize = async () => {
+    // load provider
+    const provider = await new ethers.providers.Web3Provider(window.ethereum);
+    const { chainId } = await provider.getNetwork();
+    console.log(' provider.getSigner(0)', provider.getSigner(0));
+    // load contract
+    const tokenContract = await new ethers.Contract(
+      contractAddress.Token,
+      TokenArtifact.abi,
+      provider.getSigner(0)
+    );
+    // connectMetaMask
+    let accounts = [];
+    let balance = undefined;
+    try {
+      accounts = await window.ethereum.request({
+        method: "eth_requestAccounts",
+      });
+      // update balance
+      balance = await tokenContract.balanceOf(accounts[0]);
+      console.log('balance', balance);
+    } catch (error) {
+      Notification.error({ content: error.message });
+    }
+    // load token data
     const name = await tokenContract.name();
     const symbol = await tokenContract.symbol();
 
+
     setAppState({
       ...appState,
-      tokenData: { name, symbol }
+      provider,
+      tokenContract,
+      tokenData: { name, symbol },
+      account: accounts[0],
+      balance,
     });
   }
+
+  const connectMetaMask = async () => {
+    console.log('connectMetaMask', connectMetaMask);
+    let accounts = [];
+    try {
+      accounts = await window.ethereum.request({
+        method: "eth_requestAccounts",
+      });
+    } catch (error) {
+      Notification.error({ content: error.message });
+    }
+    setAppState({
+      ...appState,
+      account: accounts[0]
+    });
+  };
 
   const updateBalance = async (tokenContract, account) => {
     const balance = await tokenContract.balanceOf(account);
@@ -60,18 +110,38 @@ const App = () => {
     });
   }
 
-  useEffect(() => {
-    if (tokenContract && account) {
-      getTokenData(tokenContract);
-      updateBalance(tokenContract, account);
+  const handleAccountsChanged = async (accounts) => {
+    if (accounts.length === 0) {
+      // MetaMask is locked or the user has not connected any accounts
+      setAppState({
+        ...appState,
+        account: undefined,
+      });
+    } else if (accounts[0] !== appState.account) {
+      setAppState({
+        ...appState,
+        account: accounts[0],
+      });
     }
-  }, [tokenContract, account]);
+    initialize();
+  }
 
-  // useEffect(() => {
-  //   if (account) {
-  //     updateBalance();
-  //   }
-  // }, [account]);
+  const handleChainChanged = (_chainId) => {
+    console.log('handleChainChanged');
+    window.location.reload();
+  };
+
+  useEffect(() => {
+    initialize();
+
+    window.ethereum.on("accountsChanged", handleAccountsChanged);
+    window.ethereum.on("chainChanged", handleChainChanged);
+
+    return () => {
+      window.ethereum.removeListener("accountsChanged", handleAccountsChanged);
+      window.ethereum.removeListener("chainChanged", handleAccountsChanged);
+    };
+  }, []);
 
   // This method resets the state
   const resetState = () => {
@@ -84,13 +154,22 @@ const App = () => {
       return <NoWalletDetected />;
     }
 
+    if (!appState.account) {
+      return (
+        <ConnectWallet 
+          connectWallet={connectMetaMask} 
+          networkError={appState.networkError}
+        />
+      );
+    }
+
     return (
       <div className="App">
         <Typography.Title>
           {appState.tokenData && appState.tokenData.name}
         </Typography.Title>
         <Typography.Paragraph>
-          Welcome <b>{account}</b>, you have{" "}
+          Welcome <b>{appState.account}</b>, you have{" "}
           <b>
             {appState.balance && appState.balance.toString()} {appState.tokenData && appState.tokenData.symbol}
           </b>
