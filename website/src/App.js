@@ -4,6 +4,7 @@ import TokenArtifact from "./abis/Token.json";
 import contractAddress from "./abis/contract-address.json";
 
 import ConnectWallet from "./pages/ConnectWallet";
+import NoTokensMessage from "./pages/NoTokensMessage";
 import Transfer from "./pages/Transfer";
 import NoWalletDetected from "./pages/NoWalletDetected";
 import { Typography, Notification } from "@arco-design/web-react";
@@ -154,12 +155,18 @@ const App = () => {
       return <NoWalletDetected />;
     }
 
-    if (!appState.account) {
+    if (appState.account === undefined) {
       return (
         <ConnectWallet 
           connectWallet={connectMetaMask} 
           networkError={appState.networkError}
         />
+      );
+    }
+
+    if (appState.balance && appState.balance.eq(0)) {
+      return (
+        <NoTokensMessage account={appState.account} />
       );
     }
 
