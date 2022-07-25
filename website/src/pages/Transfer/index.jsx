@@ -3,13 +3,14 @@ import { Form, Input, InputNumber, Button, Typography } from "@arco-design/web-r
 
 const FormItem = Form.Item;
 
-const Transfer = () => {
+const Transfer = ({ transferTokens }) => {
     const [form] = Form.useForm();
 
     const onSubmit = () => {
         form.validate(async (errors, values) => {
             if (!errors) {
-                console.log('values', values);
+                const { address, amount } = values;
+                transferTokens(address, amount);
             }
         });
     }

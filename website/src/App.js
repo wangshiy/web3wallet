@@ -132,6 +132,58 @@ const App = () => {
     window.location.reload();
   };
 
+  const transferTokens = async (to, amount) => {
+    console.log('to, amount', to, amount);
+
+    try {
+
+      // todo: fix tokenContract to non-state variable
+      const tx = await appState.tokenContract.transfer(to, amount);
+      setAppState({
+        ...appState,
+        txBeingSent: tx.hash,
+      });
+
+      // We use .wait() to wait for the transaction to be mined. This method
+      // returns the transaction's receipt.
+      const receipt = await tx.wait();
+
+      // The receipt, contains a status flag, which is 0 to indicate an error.
+      if (receipt.status === 0) {
+        // We can't know the exact error that made the transaction fail when it
+        // was mined, so we throw this generic one.
+        throw new Error("Transaction failed");
+      }
+
+      // If we got here, the transaction was successful, so you may want to
+      // update your state. Here, we update the user's balance.
+      // todo: fix tokenContract to non-state variable
+      Notification.success({ content: "Transfer Succeed!" });
+      await updateBalance(appState.tokenContract, appState.account);
+    } catch (error) {
+      // We check the error code to see if this error was produced because the
+      // user rejected a tx. If that's the case, we do nothing.
+      if (error.code === ERROR_CODE_TX_REJECTED_BY_USER) {
+        return;
+      }
+
+      // Other errors are logged and stored in the Dapp's state. This is used to
+      // show them to the user, and for debugging.
+      console.error(error);
+      setAppState({
+        ...appState,
+        transactionError: error,
+      });
+    } finally {
+      // If we leave the try/catch, we aren't sending a tx anymore, so we clear
+      // this part of the state.
+      setAppState({
+        ...appState,
+        txBeingSent: undefined,
+      });
+    }
+  }
+
   useEffect(() => {
     initialize();
 
@@ -157,8 +209,8 @@ const App = () => {
 
     if (appState.account === undefined) {
       return (
-        <ConnectWallet 
-          connectWallet={connectMetaMask} 
+        <ConnectWallet
+          connectWallet={connectMetaMask}
           networkError={appState.networkError}
         />
       );
@@ -182,7 +234,9 @@ const App = () => {
           </b>
           .
         </Typography.Paragraph>
-        <Transfer />
+        <Transfer
+          transferTokens={transferTokens}
+        />
       </div>
     );
   };
