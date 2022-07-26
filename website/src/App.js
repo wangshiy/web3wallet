@@ -6,6 +6,7 @@ import contractAddress from "./abis/contract-address.json";
 import ConnectWallet from "./pages/ConnectWallet";
 import NoTokensMessage from "./pages/NoTokensMessage";
 import Transfer from "./pages/Transfer";
+import WaitingForTransactionMessage from "./pages/WaitingForTransactionMessage";
 import NoWalletDetected from "./pages/NoWalletDetected";
 import { Typography, Notification } from "@arco-design/web-react";
 import "@arco-design/web-react/dist/css/arco.css";
@@ -220,6 +221,10 @@ const App = () => {
       return (
         <NoTokensMessage account={appState.account} />
       );
+    }
+
+    if (appState.txBeingSent) {
+      return (<WaitingForTransactionMessage txHash={appState.txBeingSent} />);
     }
 
     return (
