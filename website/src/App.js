@@ -178,9 +178,11 @@ const App = () => {
     } finally {
       // If we leave the try/catch, we aren't sending a tx anymore, so we clear
       // this part of the state.
-      setAppState({
-        ...appState,
-        txBeingSent: undefined,
+      setAppState((prevState, _) => {
+        return {
+          ...prevState,
+          txBeingSent: undefined,
+        };
       });
     }
   }
