@@ -5,6 +5,7 @@ import contractAddress from "./abis/contract-address.json";
 
 import ConnectWallet from "./pages/ConnectWallet";
 import NoTokensMessage from "./pages/NoTokensMessage";
+import Loading from "./pages/Loading";
 import Transfer from "./pages/Transfer";
 import WaitingForTransactionMessage from "./pages/WaitingForTransactionMessage";
 import TransactionErrorMessage from "./pages/TransactionErrorMessage";
@@ -208,6 +209,10 @@ const App = () => {
 
     if (appState.transactionError) {
       return (<TransactionErrorMessage transactionError={appState.transactionError} />);
+    }
+
+    if (appState.tokenData === undefined || appState.balance === undefined) {
+      return (<Loading />);
     }
 
     return (
