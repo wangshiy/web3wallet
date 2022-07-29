@@ -8,6 +8,10 @@
 - netlify: https://app.netlify.com/sites/web3wallet-demo/overview, web hosting
 - goerlifaucet: https://goerlifaucet.com/, get test goerli eth
 
+## Demo
+
+![Demo](./demo/demo.gif)
+
 ## How to develop
 
 ### Contract
