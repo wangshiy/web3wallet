@@ -10,7 +10,10 @@ const NoTokensMessage = ({ account }) => {
         To get some tokens, open a terminal in the root of the repository and run:
         <br />
         <br />
+        <p>For localhost: </p>
         <code>npx hardhat --network localhost faucet {account}</code>
+        <p>For Goerli: </p>
+        <code> https://goerlifaucet.com/</code>
       </p>}
     ></Result>
   );
